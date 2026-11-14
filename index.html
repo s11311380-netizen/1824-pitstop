@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pitstop - 高中遊戲製作人 第 6 課協作專案</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      padding: 20px;
+      background-color: #111827;
+      color: #f3f4f6;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    header {
+      text-align: center;
+      margin-bottom: 16px;
+    }
+    h1 {
+      margin: 0 0 8px 0;
+      font-size: 26px;
+      color: #22c55e;
+      letter-spacing: 1px;
+    }
+    p {
+      margin: 0;
+      font-size: 14px;
+      color: #9ca3af;
+    }
+    #gameCanvas {
+      background-color: #1f2937;
+      border: 3px solid #374151;
+      border-radius: 8px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
+      display: block;
+    }
+    .controls {
+      margin-top: 14px;
+      font-size: 14px;
+      color: #9ca3af;
+      text-align: center;
+    }
+    kbd {
+      background-color: #374151;
+      color: #f9fafb;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+      border-bottom: 2px solid #1f2937;
+      font-family: inherit;
+    }
+    .module-notice {
+      margin-top: 12px;
+      font-size: 13px;
+      color: #6b7280;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🏁 Pitstop - 團隊協作專案</h1>
+    <p>高中遊戲製作人 第 6 課分組作業 | 第一個協作專案</p>
+  </header>
+
+  <canvas id="gameCanvas" width="480" height="640"></canvas>
+
+  <div class="controls">
+    🎮 控制方式：使用鍵盤 <kbd>←</kbd> 或 <kbd>→</kbd> 方向鍵（亦支援 <kbd>A</kbd> / <kbd>D</kbd>）左右移動
+  </div>
+
+  <div class="module-notice">
+    💡 提示：組員可於 <code>src/</code> 目錄擴充模組（障礙物、計分、音效、關卡）
+  </div>
+
+  <script>
+    // 獲取 Canvas 與繪圖環境
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // ==========================================
+    // 玩家方塊設定 (Player Settings)
+    // ==========================================
+    const player = {
+      width: 40,
+      height: 40,
+      x: (canvas.width - 40) / 2, // 初始置中 (480 / 2 - 20 = 220)
+      y: canvas.height - 70,      // 靠近底部 (640 - 70 = 570)
+      speed: 6,
+      color: '#22c55e'            // 綠色方塊
+    };
+
+    // ==========================================
+    // 鍵盤輸入監聽 (Keyboard Controls)
+    // ==========================================
+    const keys = {
+      left: false,
+      right: false
+    };
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+        keys.left = true;
+        e.preventDefault();
+      }
+      if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+        keys.right = true;
+        e.preventDefault();
+      }
+    });
+
+    window.addEventListener('keyup', (e) => {
+      if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+        keys.left = false;
+        e.preventDefault();
+      }
+      if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+        keys.right = false;
+        e.preventDefault();
+      }
+    });
+
+    // ==========================================
+    // 遊戲邏輯更新 (Update Loop)
+    // ==========================================
+    function update() {
+      // 根據按鍵狀態更新玩家位置
+      if (keys.left) {
+        player.x -= player.speed;
+      }
+      if (keys.right) {
+        player.x += player.speed;
+      }
+
+      // 畫布邊界限制 (Boundary Check: 0 ~ 480)
+      if (player.x < 0) {
+        player.x = 0;
+      }
+      if (player.x + player.width > canvas.width) {
+        player.x = canvas.width - player.width;
+      }
+    }
+
+    // ==========================================
+    // 畫面繪製 (Render Loop)
+    // ==========================================
+    function draw() {
+      // 1. 清除畫布
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // 2. 繪製邊框背景輔助線
+      ctx.strokeStyle = '#374151';
+      ctx.setLineDash([6, 6]);
+      ctx.beginPath();
+      ctx.moveTo(canvas.width / 2, 0);
+      ctx.lineTo(canvas.width / 2, canvas.height);
+      ctx.stroke();
+      ctx.setLineDash([]); // 重置虛線
+
+      // 3. 繪製玩家（綠色方塊）
+      ctx.fillStyle = player.color;
+      ctx.shadowColor = '#4ade80';
+      ctx.shadowBlur = 8;
+      ctx.fillRect(player.x, player.y, player.width, player.height);
+      ctx.shadowBlur = 0;
+
+      // 4. 繪製狀態文字
+      ctx.fillStyle = '#9ca3af';
+      ctx.font = '13px monospace';
+      ctx.fillText(`Player Pos: (${Math.round(player.x)}, ${player.y})`, 16, 28);
+    }
+
+    // ==========================================
+    // 主遊戲循環 (Main Game Loop)
+    // ==========================================
+    function gameLoop() {
+      update();
+      draw();
+      requestAnimationFrame(gameLoop);
+    }
+
+    // 啟動遊戲
+    requestAnimationFrame(gameLoop);
+  </script>
+
+  <!-- 
+    ===================================================================
+    【組員引入模組預留位置 (Module Import Placeholder)】
+    組員可在 src/ 資料夾內編寫各自分工的模組，並在此引入：
+    例如：
+    <script src="src/obstacles.js"></script>
+    <script src="src/score.js"></script>
+    <script src="src/sound.js"></script>
+    ===================================================================
+  -->
+</body>
+</html>
